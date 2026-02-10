@@ -1,7 +1,10 @@
 package org.j2e.servlet;
 
 import org.j2e.bean.Annonce;
-import org.j2e.dao.AnnonceDao;
+import org.j2e.bean.Category;
+import org.j2e.bean.User;
+import org.j2e.service.AnnonceService;
+import org.j2e.service.CategoryService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -9,37 +12,59 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
-// URL d'accès : http://localhost:8080/J2E/AnnonceAdd
+/**
+ * Servlet pour ajouter une annonce.
+ */
 @WebServlet("/AnnonceAdd")
 public class AnnonceAdd extends HttpServlet {
-
     private static final long serialVersionUID = 1L;
+    private final AnnonceService annonceService = new AnnonceService();
+    private final CategoryService categoryService = new CategoryService();
 
-    // Méthode appelée quand on demande la page (GET)
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // On affiche simplement la JSP
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Charger les catégories pour le dropdown
+        List<Category> categories = categoryService.getAllCategories();
+        request.setAttribute("categories", categories);
         this.getServletContext().getRequestDispatcher("/AnnonceAdd.jsp").forward(request, response);
     }
 
-    // Méthode appelée quand on valide le formulaire (POST)
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-        // 1. Récupération des données du formulaire
         String title = request.getParameter("title");
         String description = request.getParameter("description");
         String adress = request.getParameter("adress");
         String mail = request.getParameter("mail");
+        String categoryIdStr = request.getParameter("categoryId");
 
-        // 2. Création de l'objet Annonce
-        Annonce nouvelleAnnonce = new Annonce(title, description, adress, mail);
+        // Récupérer l'utilisateur connecté
+        User currentUser = (User) request.getSession().getAttribute("user");
 
-        // 3. Appel au DAO pour enregistrer en base de données
-        AnnonceDao dao = new AnnonceDao();
-        dao.create(nouvelleAnnonce);
+        try {
+            Annonce annonce = new Annonce(title, description, adress, mail);
+            Long categoryId = (categoryIdStr != null && !categoryIdStr.isEmpty()) ?
+                              Long.parseLong(categoryIdStr) : null;
 
-        // 4. Confirmation et rechargement de la page
-        request.setAttribute("message", "Annonce enregistrée avec succès !");
+            annonceService.createAnnonce(annonce, currentUser.getId(), categoryId);
+
+            request.setAttribute("message", "Annonce créée avec succès !");
+        } catch (Exception e) {
+            request.setAttribute("error", "Erreur : " + e.getMessage());
+            // Conserver les valeurs saisies
+            request.setAttribute("title", title);
+            request.setAttribute("description", description);
+            request.setAttribute("adress", adress);
+            request.setAttribute("mail", mail);
+            request.setAttribute("categoryId", categoryIdStr);
+        }
+
+        List<Category> categories = categoryService.getAllCategories();
+        request.setAttribute("categories", categories);
         this.getServletContext().getRequestDispatcher("/AnnonceAdd.jsp").forward(request, response);
     }
 }

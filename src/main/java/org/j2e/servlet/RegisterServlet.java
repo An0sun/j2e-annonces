@@ -8,22 +8,20 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Servlet de connexion.
- * Vérifie les credentials via UserService.
+ * Servlet d'inscription.
  */
-@WebServlet("/Login")
-public class LoginServlet extends HttpServlet {
+@WebServlet("/Register")
+public class RegisterServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final UserService userService = new UserService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/register.jsp").forward(request, response);
     }
 
     @Override
@@ -31,18 +29,18 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String username = request.getParameter("username");
+        String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        User user = userService.login(username, password);
-
-        if (user != null) {
-            HttpSession session = request.getSession();
-            session.setAttribute("user", user);
-            response.sendRedirect(request.getContextPath() + "/AnnonceList");
-        } else {
-            request.setAttribute("error", "Nom d'utilisateur ou mot de passe incorrect");
+        try {
+            User user = new User(username, email, password);
+            userService.register(user);
+            response.sendRedirect(request.getContextPath() + "/login.jsp?registered=true");
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("error", e.getMessage());
             request.setAttribute("username", username);
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            request.setAttribute("email", email);
+            request.getRequestDispatcher("/register.jsp").forward(request, response);
         }
     }
 }

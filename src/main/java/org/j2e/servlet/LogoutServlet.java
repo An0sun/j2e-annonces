@@ -1,32 +1,27 @@
 package org.j2e.servlet;
 
-import org.j2e.service.AnnonceService;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Servlet pour supprimer une annonce.
+ * Servlet de déconnexion.
  */
-@WebServlet("/AnnonceDelete")
-public class AnnonceDelete extends HttpServlet {
+@WebServlet("/Logout")
+public class LogoutServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private final AnnonceService annonceService = new AnnonceService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String idStr = request.getParameter("id");
-
-        if (idStr != null && !idStr.isEmpty()) {
-            Long id = Long.parseLong(idStr);
-            annonceService.deleteAnnonce(id);
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
         }
-
-        response.sendRedirect("AnnonceList");
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
     }
 }
