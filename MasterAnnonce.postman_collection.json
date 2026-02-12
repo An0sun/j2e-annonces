@@ -1,0 +1,314 @@
+{
+	"info": {
+		"_postman_id": "masterannonce-api",
+		"name": "MasterAnnonce API REST",
+		"description": "Collection Postman pour tester l'API REST JAX-RS de MasterAnnonce.\n\nWorkflow recommandé :\n1. Register → Login → Copier le token\n2. Créer une annonce\n3. Lister / Détail\n4. Publier → Archiver → Supprimer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/J2E/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "annonceId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Exercice 1 – Hello World",
+			"item": [
+				{
+					"name": "GET /api/helloWorld",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/helloWorld",
+						"header": []
+					}
+				},
+				{
+					"name": "GET /api/params?name=John",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/params?name=John",
+							"host": ["{{baseUrl}}"],
+							"path": ["params"],
+							"query": [{"key": "name", "value": "John"}]
+						},
+						"header": []
+					}
+				},
+				{
+					"name": "GET /api/params/42",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/params/42",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentification",
+			"item": [
+				{
+					"name": "POST /api/register",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/register",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"motdepasse\"\n}"
+						}
+					}
+				},
+				{
+					"name": "POST /api/login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    console.log('Token sauvegardé:', jsonData.token);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/login",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"motdepasse\"\n}"
+						}
+					}
+				},
+				{
+					"name": "POST /api/login (mauvais password → 401)",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/login",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"mauvais\"\n}"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "CRUD Annonces",
+			"item": [
+				{
+					"name": "POST /api/annonces (Création → 201)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('annonceId', jsonData.id);",
+									"    console.log('Annonce ID sauvegardé:', jsonData.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/annonces",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Appartement T3 à Paris\",\n    \"description\": \"Bel appartement lumineux\",\n    \"adress\": \"75011 Paris\",\n    \"mail\": \"contact@example.com\",\n    \"categoryId\": 1\n}"
+						}
+					}
+				},
+				{
+					"name": "GET /api/annonces (Liste paginée)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/annonces?page=1&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["annonces"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "size", "value": "10"}
+							]
+						},
+						"header": []
+					}
+				},
+				{
+					"name": "GET /api/annonces/{id} (Détail)",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}",
+						"header": []
+					}
+				},
+				{
+					"name": "GET /api/annonces/99999 (404 Not Found)",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/annonces/99999",
+						"header": []
+					}
+				},
+				{
+					"name": "PUT /api/annonces/{id} (Mise à jour)",
+					"request": {
+						"method": "PUT",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Appartement T3 rénové\",\n    \"description\": \"Bel appartement lumineux, fraîchement rénové\",\n    \"adress\": \"75011 Paris\",\n    \"mail\": \"contact@example.com\",\n    \"categoryId\": 1\n}"
+						}
+					}
+				},
+				{
+					"name": "PATCH /api/annonces/{id} (Mise à jour partielle)",
+					"request": {
+						"method": "PATCH",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Nouveau titre uniquement\"\n}"
+						}
+					}
+				},
+				{
+					"name": "POST /api/annonces (sans token → 401)",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/annonces",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Test sans auth\"\n}"
+						}
+					}
+				},
+				{
+					"name": "POST /api/annonces (validation → 400)",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/annonces",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"\",\n    \"mail\": \"pas-un-email\"\n}"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Workflow Statut",
+			"item": [
+				{
+					"name": "POST /api/annonces/{id}/publish (DRAFT → PUBLISHED)",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}/publish",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						]
+					}
+				},
+				{
+					"name": "PUT /api/annonces/{id} (PUBLISHED → 409 Conflict)",
+					"request": {
+						"method": "PUT",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Tentative modif publiée\"\n}"
+						}
+					}
+				},
+				{
+					"name": "DELETE /api/annonces/{id} (non archivée → 409)",
+					"request": {
+						"method": "DELETE",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						]
+					}
+				},
+				{
+					"name": "POST /api/annonces/{id}/archive (→ ARCHIVED)",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}/archive",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						]
+					}
+				},
+				{
+					"name": "DELETE /api/annonces/{id} (ARCHIVED → 204)",
+					"request": {
+						"method": "DELETE",
+						"url": "{{baseUrl}}/annonces/{{annonceId}}",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"}
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Documentation",
+			"item": [
+				{
+					"name": "GET /api/openapi.json",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/openapi.json",
+						"header": []
+					}
+				}
+			]
+		}
+	]
+}
