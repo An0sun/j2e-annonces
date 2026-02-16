@@ -31,8 +31,6 @@ org.j2e
 │   ├── filter/          # Filtre de sécurité JAX-RS (@Secured, SecurityFilter)
 │   └── exception/       # ExceptionMappers centralisés (400, 403, 404, 409, 500)
 ├── security/            # TokenStore (authentification stateless)
-├── servlet/             # Servlets legacy (Login, Register, etc.)
-├── filter/              # Filtre Servlet legacy (AuthFilter)
 └── util/                # Utilitaires (JPAUtil)
 ```
 
@@ -81,19 +79,24 @@ org.j2e
 | GET | `/api/params/{id}` | Démo @PathParam |
 | GET | `/api/openapi.json` | Documentation OpenAPI |
 
-## Flux de sécurité (Stateless)
+## Flux de sécurité JAAS (Exercice 5 Bonus)
 
 ```
 1. POST /api/login { username, password }
-   → Vérification credentials via UserService
-   → Génération UUID token → stockage en mémoire (TokenStore)
+   → CallbackHandler fournit les credentials
+   → LoginContext("MasterAnnonceLogin") → DbLoginModule
+   → DbLoginModule vérifie en base via UserRepository
+   → Ajoute UserPrincipal + RolePrincipal au Subject
+   → Génération UUID token → stockage mémoire (TokenStore)
    → Réponse : { token, username, userId }
 
 2. Requêtes protégées :
    Header : Authorization: Bearer <token>
    → SecurityFilter intercepte (@Secured)
-   → Validation token via TokenStore
-   → Injection userId dans SecurityContext
+   → LoginContext("MasterAnnonceToken") → TokenLoginModule
+   → TokenLoginModule valide le token via TokenStore
+   → Reconstitue UserPrincipal dans le Subject JAAS
+   → Injection dans SecurityContext JAX-RS
    → Si invalide : 401 Unauthorized
 
 3. Règles métier :
@@ -136,12 +139,13 @@ mvnw.cmd verify         # Tests unitaires + intégration (*IT.java)
 |---|---|---|---|
 | Unit | AnnonceRepositoryTest | 8 | CRUD repository avec H2 |
 | Unit | AnnonceServiceTest | 12 | Logique métier |
-| Unit | WebServletTest | 9 | Servlets et filtres (Mockito) |
 | Unit | AnnonceResourceTest | 15 | DTOs, Mapper, Exceptions, TokenStore |
+| Unit | JaasTest | 11 | LoginModules JAAS, Principals, Callbacks |
 | Intégration | IntegrationTest | 3 | Workflow complet services |
 | Intégration | AnnonceApiIT | 15 | Workflow REST API complet |
+| Intégration | LoadTestIT | 3 | Tests de charge concurrents (20 threads) |
 
-**Total : 62 tests (47 unitaires + 15 intégration)**
+**Total : 67 tests (46 unitaires + 21 intégration)**
 
 ## Problèmes rencontrés et solutions
 
