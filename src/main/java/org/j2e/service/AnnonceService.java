@@ -5,9 +5,8 @@ import org.j2e.bean.AnnonceStatus;
 import org.j2e.bean.Category;
 import org.j2e.bean.User;
 import org.j2e.dao.AnnonceRepository;
-import org.j2e.util.JPAUtil;
-
-import javax.persistence.EntityManager;
+import org.j2e.dao.CategoryRepository;
+import org.j2e.dao.UserRepository;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -17,138 +16,109 @@ import java.util.List;
  */
 public class AnnonceService {
 
-    private final AnnonceRepository annonceRepository = new AnnonceRepository();
+    private AnnonceRepository annonceRepository;
+    private UserRepository userRepository;
+    private CategoryRepository categoryRepository;
+
+    public AnnonceService() {
+        this.annonceRepository = new AnnonceRepository();
+        this.userRepository = new UserRepository();
+        this.categoryRepository = new CategoryRepository();
+    }
+
+    public AnnonceService(AnnonceRepository annonceRepository, UserRepository userRepository, CategoryRepository categoryRepository) {
+        this.annonceRepository = annonceRepository;
+        this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
+    }
+
 
     /**
      * Créer une nouvelle annonce.
      * Le statut est automatiquement mis à DRAFT.
      */
     public void createAnnonce(Annonce annonce, Long authorId, Long categoryId) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            em.getTransaction().begin();
-
-            // Charger les entités liées dans le même contexte
-            User author = em.find(User.class, authorId);
-            if (author == null) {
-                throw new IllegalArgumentException("Utilisateur introuvable (id=" + authorId + ")");
-            }
-
-            if (categoryId != null) {
-                Category category = em.find(Category.class, categoryId);
-                if (category == null) {
-                    throw new IllegalArgumentException("Catégorie introuvable (id=" + categoryId + ")");
-                }
-                annonce.setCategory(category);
-            }
-
-            annonce.setAuthor(author);
-            annonce.setStatus(AnnonceStatus.DRAFT);
-            annonce.setDate(new Timestamp(System.currentTimeMillis()));
-
-            em.persist(annonce);
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
+        User author = userRepository.findById(authorId);
+        if (author == null) {
+            throw new IllegalArgumentException("Utilisateur introuvable (id=" + authorId + ")");
         }
+
+        if (categoryId != null) {
+            Category category = categoryRepository.findById(categoryId);
+            if (category == null) {
+                throw new IllegalArgumentException("Catégorie introuvable (id=" + categoryId + ")");
+            }
+            annonce.setCategory(category);
+        }
+
+        annonce.setAuthor(author);
+        annonce.setStatus(AnnonceStatus.DRAFT);
+        annonce.setDate(new Timestamp(System.currentTimeMillis()));
+
+        annonceRepository.save(annonce);
     }
 
     /**
      * Modifier une annonce existante.
      */
     public void updateAnnonce(Annonce annonce, Long categoryId) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            em.getTransaction().begin();
-
-            Annonce existing = em.find(Annonce.class, annonce.getId());
-            if (existing == null) {
-                throw new IllegalArgumentException("Annonce introuvable (id=" + annonce.getId() + ")");
-            }
-
-            existing.setTitle(annonce.getTitle());
-            existing.setDescription(annonce.getDescription());
-            existing.setAdress(annonce.getAdress());
-            existing.setMail(annonce.getMail());
-
-            if (categoryId != null) {
-                Category category = em.find(Category.class, categoryId);
-                existing.setCategory(category);
-            }
-
-            // merge est implicite car existing est managed
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
+        // En JPA avec transaction, un objet récupéré via find() est "géré".
+        // Les modifications dessus sont automatiquement persistées au commit.
+        // MAIS ici on veut passer par le Repository.
+        // Le Repository findById ferme l'EM, donc l'objet est détaché.
+        // On doit le modifier puis appeler save() (qui fera un merge).
+        
+        Annonce existing = annonceRepository.findById(annonce.getId());
+        if (existing == null) {
+            throw new IllegalArgumentException("Annonce introuvable (id=" + annonce.getId() + ")");
         }
+
+        existing.setTitle(annonce.getTitle());
+        existing.setDescription(annonce.getDescription());
+        existing.setAdress(annonce.getAdress());
+        existing.setMail(annonce.getMail());
+
+        if (categoryId != null) {
+            Category category = categoryRepository.findById(categoryId);
+            if (category == null) {
+                // On pourrait throw ou ignorer.
+                 throw new IllegalArgumentException("Catégorie introuvable (id=" + categoryId + ")");
+            }
+            existing.setCategory(category);
+        }
+
+        annonceRepository.save(existing);
     }
 
     /**
      * Publier une annonce (DRAFT → PUBLISHED).
      */
     public void publishAnnonce(Long id) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            em.getTransaction().begin();
-            Annonce annonce = em.find(Annonce.class, id);
-            if (annonce == null) {
-                throw new IllegalArgumentException("Annonce introuvable");
-            }
-            annonce.setStatus(AnnonceStatus.PUBLISHED);
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
+        Annonce annonce = annonceRepository.findById(id);
+        if (annonce == null) {
+            throw new IllegalArgumentException("Annonce introuvable");
         }
+        annonce.setStatus(AnnonceStatus.PUBLISHED);
+        annonceRepository.save(annonce);
     }
 
     /**
      * Archiver une annonce (→ ARCHIVED).
      */
     public void archiveAnnonce(Long id) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            em.getTransaction().begin();
-            Annonce annonce = em.find(Annonce.class, id);
-            if (annonce == null) {
-                throw new IllegalArgumentException("Annonce introuvable");
-            }
-            annonce.setStatus(AnnonceStatus.ARCHIVED);
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
+        Annonce annonce = annonceRepository.findById(id);
+        if (annonce == null) {
+            throw new IllegalArgumentException("Annonce introuvable");
         }
+        annonce.setStatus(AnnonceStatus.ARCHIVED);
+        annonceRepository.save(annonce);
     }
 
     /**
      * Supprimer une annonce.
      */
     public void deleteAnnonce(Long id) {
-        EntityManager em = JPAUtil.getEntityManager();
-        try {
-            em.getTransaction().begin();
-            Annonce annonce = em.find(Annonce.class, id);
-            if (annonce != null) {
-                em.remove(annonce);
-            }
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
-        }
+        annonceRepository.delete(id);
     }
 
     /**

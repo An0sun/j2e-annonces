@@ -9,7 +9,16 @@ import org.j2e.dao.UserRepository;
  */
 public class UserService {
 
-    private final UserRepository userRepository = new UserRepository();
+    private UserRepository userRepository;
+
+    public UserService() {
+        this.userRepository = new UserRepository();
+    }
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
 
     /**
      * Inscription d'un nouvel utilisateur.

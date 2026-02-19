@@ -10,7 +10,16 @@ import java.util.List;
  */
 public class CategoryService {
 
-    private final CategoryRepository categoryRepository = new CategoryRepository();
+    private CategoryRepository categoryRepository;
+
+    public CategoryService() {
+        this.categoryRepository = new CategoryRepository();
+    }
+
+    public CategoryService(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
+
 
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
