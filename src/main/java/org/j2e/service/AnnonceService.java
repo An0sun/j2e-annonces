@@ -7,6 +7,9 @@ import org.j2e.bean.User;
 import org.j2e.dao.AnnonceRepository;
 import org.j2e.dao.CategoryRepository;
 import org.j2e.dao.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -16,6 +19,8 @@ import java.util.List;
  */
 public class AnnonceService {
 
+    private static final Logger log = LoggerFactory.getLogger(AnnonceService.class);
+    
     private AnnonceRepository annonceRepository;
     private UserRepository userRepository;
     private CategoryRepository categoryRepository;
@@ -32,20 +37,23 @@ public class AnnonceService {
         this.categoryRepository = categoryRepository;
     }
 
-
     /**
      * Créer une nouvelle annonce.
      * Le statut est automatiquement mis à DRAFT.
      */
     public void createAnnonce(Annonce annonce, Long authorId, Long categoryId) {
+        log.info("Création d'annonce: title='{}', authorId={}, categoryId={}", annonce.getTitle(), authorId, categoryId);
+
         User author = userRepository.findById(authorId);
         if (author == null) {
+            log.error("Utilisateur introuvable: id={}", authorId);
             throw new IllegalArgumentException("Utilisateur introuvable (id=" + authorId + ")");
         }
 
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId);
             if (category == null) {
+                log.error("Catégorie introuvable: id={}", categoryId);
                 throw new IllegalArgumentException("Catégorie introuvable (id=" + categoryId + ")");
             }
             annonce.setCategory(category);
@@ -56,20 +64,18 @@ public class AnnonceService {
         annonce.setDate(new Timestamp(System.currentTimeMillis()));
 
         annonceRepository.save(annonce);
+        log.info("Annonce créée avec succès: id={}", annonce.getId());
     }
 
     /**
      * Modifier une annonce existante.
      */
     public void updateAnnonce(Annonce annonce, Long categoryId) {
-        // En JPA avec transaction, un objet récupéré via find() est "géré".
-        // Les modifications dessus sont automatiquement persistées au commit.
-        // MAIS ici on veut passer par le Repository.
-        // Le Repository findById ferme l'EM, donc l'objet est détaché.
-        // On doit le modifier puis appeler save() (qui fera un merge).
-        
+        log.info("Mise à jour de l'annonce: id={}, categoryId={}", annonce.getId(), categoryId);
+
         Annonce existing = annonceRepository.findById(annonce.getId());
         if (existing == null) {
+            log.warn("Annonce introuvable pour modification: id={}", annonce.getId());
             throw new IllegalArgumentException("Annonce introuvable (id=" + annonce.getId() + ")");
         }
 
@@ -81,50 +87,60 @@ public class AnnonceService {
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId);
             if (category == null) {
-                // On pourrait throw ou ignorer.
+                 log.warn("Catégorie introuvable lors de l'update: id={}", categoryId);
                  throw new IllegalArgumentException("Catégorie introuvable (id=" + categoryId + ")");
             }
             existing.setCategory(category);
         }
 
         annonceRepository.save(existing);
+        log.debug("Annonce mise à jour avec succès: id={}", annonce.getId());
     }
 
     /**
      * Publier une annonce (DRAFT → PUBLISHED).
      */
     public void publishAnnonce(Long id) {
+        log.info("Publication de l'annonce: id={}", id);
         Annonce annonce = annonceRepository.findById(id);
         if (annonce == null) {
+            log.warn("Annonce introuvable pour publication: id={}", id);
             throw new IllegalArgumentException("Annonce introuvable");
         }
         annonce.setStatus(AnnonceStatus.PUBLISHED);
         annonceRepository.save(annonce);
+        log.info("Annonce publiée: id={}, status=PUBLISHED", id);
     }
 
     /**
      * Archiver une annonce (→ ARCHIVED).
      */
     public void archiveAnnonce(Long id) {
+        log.info("Archivage de l'annonce: id={}", id);
         Annonce annonce = annonceRepository.findById(id);
         if (annonce == null) {
+            log.warn("Annonce introuvable pour archivage: id={}", id);
             throw new IllegalArgumentException("Annonce introuvable");
         }
         annonce.setStatus(AnnonceStatus.ARCHIVED);
         annonceRepository.save(annonce);
+        log.info("Annonce archivée: id={}, status=ARCHIVED", id);
     }
 
     /**
      * Supprimer une annonce.
      */
     public void deleteAnnonce(Long id) {
+        log.info("Suppression de l'annonce: id={}", id);
         annonceRepository.delete(id);
+        log.info("Annonce supprimée: id={}", id);
     }
 
     /**
      * Récupérer une annonce par ID (avec relations chargées).
      */
     public Annonce getAnnonceById(Long id) {
+        log.debug("Récupération annonce: id={}", id);
         return annonceRepository.findByIdWithRelations(id);
     }
 
@@ -140,6 +156,7 @@ public class AnnonceService {
      * @return liste d'annonces pour la page demandée
      */
     public List<Annonce> listPaginated(int page, int size) {
+        log.debug("Listing paginé: page={}, size={}", page, size);
         return annonceRepository.findPaginated(page, size);
     }
 
@@ -154,6 +171,7 @@ public class AnnonceService {
      * Recherche par mot-clé.
      */
     public List<Annonce> search(String keyword) {
+        log.debug("Recherche annonces: keyword='{}'", keyword);
         return annonceRepository.searchByKeyword(keyword);
     }
 
