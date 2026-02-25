@@ -1,0 +1,7 @@
+target/
+.git/
+*.md
+.dockerignore
+docker-compose.yml
+.github/
+k8s/

@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: MasterAnnonce
+
+  # ===== Data Source =====
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/MasterAnnonce}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  # ===== JPA / Hibernate =====
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # ===== Jackson =====
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+# ===== Server =====
+server:
+  port: ${SERVER_PORT:8080}
+
+# ===== JWT =====
+app:
+  jwt:
+    secret: ${JWT_SECRET:dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZw==}
+    expiration-ms: ${JWT_EXPIRATION:3600000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION:86400000}
+
+# ===== Actuator =====
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+# ===== SpringDoc OpenAPI =====
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+# ===== Logging =====
+logging:
+  level:
+    com.masterannonce: DEBUG
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%X{correlationId:-N/A}] %-5level %logger{36} - %msg%n"
