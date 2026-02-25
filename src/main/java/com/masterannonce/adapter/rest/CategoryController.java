@@ -19,7 +19,7 @@ import java.util.List;
  * Controller REST pour les Catégories.
  */
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/api/v1/categories")
 @Tag(name = "Catégories", description = "Gestion des catégories d'annonces")
 public class CategoryController {
 
@@ -51,7 +51,7 @@ public class CategoryController {
     public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody CategoryCreateDTO dto) {
         Category category = categoryMapper.toEntity(dto);
         Category saved = categoryService.createCategory(category);
-        return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
+        return ResponseEntity.created(URI.create("/api/v1/categories/" + saved.getId()))
             .body(categoryMapper.toDTO(saved));
     }
 }

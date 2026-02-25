@@ -53,13 +53,13 @@ public class SecurityConfig {
                 .accessDeniedHandler(this::handleAccessDenied))
             .authorizeHttpRequests(auth -> auth
                 // Endpoints publics
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/api/meta/**").permitAll()
+                .requestMatchers("/api/v1/meta/**").permitAll()
                 // GET annonces : publiques (lecture seule)
-                .requestMatchers(HttpMethod.GET, "/api/annonces/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/annonces/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                 // Tout le reste nécessite une authentification
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

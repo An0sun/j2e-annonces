@@ -71,7 +71,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
 
     private String login(String username, String password) throws Exception {
         LoginRequest req = new LoginRequest(username, password);
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
             .andExpect(status().isOk())
@@ -85,7 +85,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /api/annonces — Liste publique paginée")
     void listAnnoncesPublic() throws Exception {
-        mockMvc.perform(get("/api/annonces"))
+        mockMvc.perform(get("/api/v1/annonces"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray());
     }
@@ -98,14 +98,15 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
         AnnonceCreateDTO dto = new AnnonceCreateDTO(
             "Appartement 3 pièces", "Bel appartement lumineux", "Paris 11e", "contact@test.com", categoryId);
 
-        mockMvc.perform(post("/api/annonces")
+        mockMvc.perform(post("/api/v1/annonces")
                 .header("Authorization", "Bearer " + userToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.title").value("Appartement 3 pièces"))
-            .andExpect(jsonPath("$.status").value("DRAFT"))
-            .andExpect(jsonPath("$.authorUsername").value("user1"));
+            .andExpect(jsonPath("$.content.title").value("Appartement 3 pièces"))
+            .andExpect(jsonPath("$.content.status").value("DRAFT"))
+            .andExpect(jsonPath("$.content.authorUsername").value("user1"))
+            .andExpect(jsonPath("$._links.self.href").exists());
     }
 
     @Test
@@ -113,7 +114,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     void createAnnonceWithoutToken() throws Exception {
         AnnonceCreateDTO dto = new AnnonceCreateDTO("Titre", "Desc", "Paris", "t@t.com", null);
 
-        mockMvc.perform(post("/api/annonces")
+        mockMvc.perform(post("/api/v1/annonces")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isUnauthorized());
@@ -128,7 +129,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
         AnnonceCreateDTO createDto = new AnnonceCreateDTO(
             "Voiture occasion", "Renault Clio 2020", "Lyon", "vente@test.com", categoryId);
 
-        MvcResult createResult = mockMvc.perform(post("/api/annonces")
+        MvcResult createResult = mockMvc.perform(post("/api/v1/annonces")
                 .header("Authorization", "Bearer " + userToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
@@ -136,12 +137,12 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
             .andReturn();
 
         Long annonceId = objectMapper.readTree(
-            createResult.getResponse().getContentAsString()).get("id").asLong();
+            createResult.getResponse().getContentAsString()).get("content").get("id").asLong();
 
         // READ
-        mockMvc.perform(get("/api/annonces/" + annonceId))
+        mockMvc.perform(get("/api/v1/annonces/" + annonceId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.title").value("Voiture occasion"));
+            .andExpect(jsonPath("$.content.title").value("Voiture occasion"));
 
         // UPDATE (PUT)
         String updateBody = """
@@ -154,39 +155,39 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
             }
             """.formatted(categoryId);
 
-        mockMvc.perform(put("/api/annonces/" + annonceId)
+        mockMvc.perform(put("/api/v1/annonces/" + annonceId)
                 .header("Authorization", "Bearer " + userToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateBody))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.title").value("Voiture occasion MODIFIÉE"));
+            .andExpect(jsonPath("$.content.title").value("Voiture occasion MODIFIÉE"));
 
         // PUBLISH
-        mockMvc.perform(patch("/api/annonces/" + annonceId + "/publish")
+        mockMvc.perform(patch("/api/v1/annonces/" + annonceId + "/publish")
                 .header("Authorization", "Bearer " + userToken))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("PUBLISHED"));
+            .andExpect(jsonPath("$.content.status").value("PUBLISHED"));
 
         // UPDATE should FAIL (PUBLISHED)
-        mockMvc.perform(put("/api/annonces/" + annonceId)
+        mockMvc.perform(put("/api/v1/annonces/" + annonceId)
                 .header("Authorization", "Bearer " + userToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateBody))
             .andExpect(status().isBadRequest());
 
         // ARCHIVE (ADMIN only)
-        mockMvc.perform(patch("/api/annonces/" + annonceId + "/archive")
+        mockMvc.perform(patch("/api/v1/annonces/" + annonceId + "/archive")
                 .header("Authorization", "Bearer " + adminToken))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("ARCHIVED"));
+            .andExpect(jsonPath("$.content.status").value("ARCHIVED"));
 
         // DELETE
-        mockMvc.perform(delete("/api/annonces/" + annonceId)
+        mockMvc.perform(delete("/api/v1/annonces/" + annonceId)
                 .header("Authorization", "Bearer " + userToken))
             .andExpect(status().isNoContent());
 
         // Vérifier suppression
-        mockMvc.perform(get("/api/annonces/" + annonceId))
+        mockMvc.perform(get("/api/v1/annonces/" + annonceId))
             .andExpect(status().isNotFound());
     }
 
@@ -197,17 +198,17 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     void archiveByNonAdmin() throws Exception {
         // Créer une annonce
         AnnonceCreateDTO dto = new AnnonceCreateDTO("Titre", "Desc", "Paris", "t@t.com", null);
-        MvcResult result = mockMvc.perform(post("/api/annonces")
+        MvcResult result = mockMvc.perform(post("/api/v1/annonces")
                 .header("Authorization", "Bearer " + userToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isCreated())
             .andReturn();
 
-        Long id = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+        Long id = objectMapper.readTree(result.getResponse().getContentAsString()).get("content").get("id").asLong();
 
         // Un USER ne peut pas archiver
-        mockMvc.perform(patch("/api/annonces/" + id + "/archive")
+        mockMvc.perform(patch("/api/v1/annonces/" + id + "/archive")
                 .header("Authorization", "Bearer " + userToken))
             .andExpect(status().isForbidden());
     }
@@ -219,7 +220,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     void createWithInvalidToken() throws Exception {
         AnnonceCreateDTO dto = new AnnonceCreateDTO("Titre", "Desc", "Paris", "t@t.com", null);
 
-        mockMvc.perform(post("/api/annonces")
+        mockMvc.perform(post("/api/v1/annonces")
                 .header("Authorization", "Bearer invalid-token-xyz")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))

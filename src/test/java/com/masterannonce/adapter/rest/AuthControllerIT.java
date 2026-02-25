@@ -44,7 +44,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
         userRepository.deleteAll();
 
         // Créer un utilisateur de test
-        User user = new User("testuser", "test@test.com", passwordEncoder.encode("password123"));
+        User user = new User("testuser", "test@test.com", passwordEncoder.encode("Password1"));
         user.setRole(Role.ROLE_USER);
         userRepository.save(user);
     }
@@ -52,9 +52,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/auth/login — Login réussi retourne un JWT")
     void loginSuccess() throws Exception {
-        LoginRequest request = new LoginRequest("testuser", "password123");
+        LoginRequest request = new LoginRequest("testuser", "Password1");
 
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -73,7 +73,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
     void loginBadCredentials() throws Exception {
         LoginRequest request = new LoginRequest("testuser", "wrongpassword");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
@@ -82,9 +82,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/auth/register — Inscription réussie")
     void registerSuccess() throws Exception {
-        RegisterRequest request = new RegisterRequest("newuser", "newuser@test.com", "password123");
+        RegisterRequest request = new RegisterRequest("newuser", "newuser@test.com", "Password1A");
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
@@ -95,9 +95,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /api/auth/register — Duplicate username retourne 400")
     void registerDuplicateUsername() throws Exception {
-        RegisterRequest request = new RegisterRequest("testuser", "other@test.com", "password123");
+        RegisterRequest request = new RegisterRequest("testuser", "other@test.com", "Password1");
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
@@ -107,8 +107,8 @@ class AuthControllerIT extends AbstractIntegrationTest {
     @DisplayName("POST /api/auth/refresh — Rafraîchir le token")
     void refreshToken() throws Exception {
         // D'abord, obtenir un refresh token via login
-        LoginRequest loginReq = new LoginRequest("testuser", "password123");
-        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+        LoginRequest loginReq = new LoginRequest("testuser", "Password1");
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginReq)))
             .andExpect(status().isOk())
@@ -120,7 +120,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
         // Utiliser le refresh token
         String body = "{\"refreshToken\": \"" + loginResponse.refreshToken() + "\"}";
 
-        mockMvc.perform(post("/api/auth/refresh")
+        mockMvc.perform(post("/api/v1/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isOk())

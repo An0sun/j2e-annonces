@@ -2,6 +2,7 @@ package com.masterannonce.application.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -17,6 +18,8 @@ public record RegisterRequest(
     String email,
 
     @NotNull(message = "Le mot de passe est obligatoire")
-    @Size(min = 4, message = "Le mot de passe doit contenir au moins 4 caractères")
+    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d).+$",
+             message = "Le mot de passe doit contenir au moins 1 majuscule et 1 chiffre")
     String password
 ) {}

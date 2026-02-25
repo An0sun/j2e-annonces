@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * les champs filtrables et triables de l'entité Annonce.
  */
 @RestController
-@RequestMapping("/api/meta")
+@RequestMapping("/api/v1/meta")
 @Tag(name = "Métadonnées", description = "Introspection des entités pour filtres et tris")
 public class MetaController {
 

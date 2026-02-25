@@ -16,7 +16,7 @@ import java.util.Map;
  * Controller d'authentification : login, register, refresh token.
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @Tag(name = "Authentification", description = "Endpoints d'authentification et d'inscription")
 public class AuthController {
 

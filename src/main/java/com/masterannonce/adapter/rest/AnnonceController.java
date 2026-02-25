@@ -23,9 +23,10 @@ import java.sql.Timestamp;
 /**
  * Controller REST pour les Annonces.
  * Pas de logique métier ici — tout est délégué au service.
+ * Les réponses unitaires incluent des liens HATEOAS (_links).
  */
 @RestController
-@RequestMapping("/api/annonces")
+@RequestMapping("/api/v1/annonces")
 @Tag(name = "Annonces", description = "CRUD et gestion du cycle de vie des annonces")
 public class AnnonceController {
 
@@ -37,11 +38,27 @@ public class AnnonceController {
         this.annonceMapper = annonceMapper;
     }
 
+    // ===== HATEOAS helper =====
+
+    private HateoasResponse<AnnonceDTO> toHateoas(AnnonceDTO dto) {
+        HateoasResponse.Builder<AnnonceDTO> builder = HateoasResponse.of(dto)
+            .link("self", "/api/v1/annonces/" + dto.id())
+            .link("collection", "/api/v1/annonces");
+
+        if ("DRAFT".equals(dto.status())) {
+            builder.link("publish", "/api/v1/annonces/" + dto.id() + "/publish");
+        }
+        if ("PUBLISHED".equals(dto.status())) {
+            builder.link("archive", "/api/v1/annonces/" + dto.id() + "/archive");
+        }
+        return builder.build();
+    }
+
     // ===== GET (publics) =====
 
     @GetMapping
     @Operation(summary = "Lister les annonces", description = "Recherche paginée avec filtres via Specifications")
-    public ResponseEntity<Page<AnnonceDTO>> listAnnonces(
+    public ResponseEntity<PageResponse<AnnonceDTO>> listAnnonces(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) AnnonceStatus status,
             @RequestParam(required = false) Long categoryId,
@@ -51,35 +68,35 @@ public class AnnonceController {
             @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
 
         Page<Annonce> page = annonceService.searchAnnonces(q, status, categoryId, authorId, fromDate, toDate, pageable);
-        Page<AnnonceDTO> dtoPage = page.map(annonceMapper::toDTO);
-        return ResponseEntity.ok(dtoPage);
+        PageResponse<AnnonceDTO> response = PageResponse.from(page.map(annonceMapper::toDTO));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Détail d'une annonce")
-    public ResponseEntity<AnnonceDTO> getAnnonce(@PathVariable Long id) {
+    public ResponseEntity<HateoasResponse<AnnonceDTO>> getAnnonce(@PathVariable Long id) {
         Annonce annonce = annonceService.getAnnonceById(id);
-        return ResponseEntity.ok(annonceMapper.toDTO(annonce));
+        return ResponseEntity.ok(toHateoas(annonceMapper.toDTO(annonce)));
     }
 
     // ===== POST / PUT / PATCH / DELETE (protégés) =====
 
     @PostMapping
     @Operation(summary = "Créer une annonce", description = "L'annonce est créée en statut DRAFT")
-    public ResponseEntity<AnnonceDTO> createAnnonce(
+    public ResponseEntity<HateoasResponse<AnnonceDTO>> createAnnonce(
             @Valid @RequestBody AnnonceCreateDTO dto,
             @AuthenticationPrincipal AuthenticatedUser user) {
 
         Annonce entity = annonceMapper.toEntity(dto);
         Annonce saved = annonceService.createAnnonce(entity, user.userId(), dto.categoryId());
-        AnnonceDTO response = annonceMapper.toDTO(saved);
+        HateoasResponse<AnnonceDTO> response = toHateoas(annonceMapper.toDTO(saved));
 
-        return ResponseEntity.created(URI.create("/api/annonces/" + saved.getId())).body(response);
+        return ResponseEntity.created(URI.create("/api/v1/annonces/" + saved.getId())).body(response);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Modifier une annonce", description = "Seul l'auteur peut modifier. Interdit si PUBLISHED.")
-    public ResponseEntity<AnnonceDTO> updateAnnonce(
+    public ResponseEntity<HateoasResponse<AnnonceDTO>> updateAnnonce(
             @PathVariable Long id,
             @Valid @RequestBody AnnonceUpdateDTO dto,
             @AuthenticationPrincipal AuthenticatedUser user) {
@@ -87,19 +104,19 @@ public class AnnonceController {
         Annonce updates = annonceMapper.toEntity(dto);
         updates.setVersion(dto.version());
         Annonce updated = annonceService.updateAnnonce(id, updates, dto.categoryId(), user.userId());
-        return ResponseEntity.ok(annonceMapper.toDTO(updated));
+        return ResponseEntity.ok(toHateoas(annonceMapper.toDTO(updated)));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Modifier partiellement une annonce (PATCH)",
                description = "Seuls les champs fournis sont mis à jour")
-    public ResponseEntity<AnnonceDTO> patchAnnonce(
+    public ResponseEntity<HateoasResponse<AnnonceDTO>> patchAnnonce(
             @PathVariable Long id,
             @Valid @RequestBody AnnoncePatchDTO dto,
             @AuthenticationPrincipal AuthenticatedUser user) {
 
         Annonce patched = annonceService.patchAnnonce(id, dto, user.userId());
-        return ResponseEntity.ok(annonceMapper.toDTO(patched));
+        return ResponseEntity.ok(toHateoas(annonceMapper.toDTO(patched)));
     }
 
     @DeleteMapping("/{id}")
@@ -116,20 +133,20 @@ public class AnnonceController {
 
     @PatchMapping("/{id}/publish")
     @Operation(summary = "Publier une annonce", description = "Transition DRAFT → PUBLISHED")
-    public ResponseEntity<AnnonceDTO> publishAnnonce(
+    public ResponseEntity<HateoasResponse<AnnonceDTO>> publishAnnonce(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthenticatedUser user) {
 
         Annonce published = annonceService.publishAnnonce(id, user.userId());
-        return ResponseEntity.ok(annonceMapper.toDTO(published));
+        return ResponseEntity.ok(toHateoas(annonceMapper.toDTO(published)));
     }
 
     @PatchMapping("/{id}/archive")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Archiver une annonce", description = "Seul un ADMIN peut archiver")
-    public ResponseEntity<AnnonceDTO> archiveAnnonce(@PathVariable Long id) {
+    public ResponseEntity<HateoasResponse<AnnonceDTO>> archiveAnnonce(@PathVariable Long id) {
 
         Annonce archived = annonceService.archiveAnnonce(id);
-        return ResponseEntity.ok(annonceMapper.toDTO(archived));
+        return ResponseEntity.ok(toHateoas(annonceMapper.toDTO(archived)));
     }
 }

@@ -32,7 +32,11 @@ jobs:
       - name: Build & verify
         run: mvn -B clean verify
 
-      # Étape D — Upload JAR artifact
+      # Étape D — Checkstyle
+      - name: Checkstyle
+        run: mvn -B checkstyle:check || true
+
+      # Étape E — Upload JAR artifact
       - name: Upload JAR
         if: matrix.java-version == 17
         uses: actions/upload-artifact@v4
@@ -72,6 +76,14 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t masterannonce:${{ github.sha }} -t masterannonce:latest .
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: masterannonce:latest
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
 
       - name: Save Docker image
         run: docker save masterannonce:latest | gzip > masterannonce-docker.tar.gz
