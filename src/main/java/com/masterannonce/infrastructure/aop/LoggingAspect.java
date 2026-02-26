@@ -24,6 +24,7 @@ public class LoggingAspect {
      * Intercepte toutes les méthodes publiques des services.
      */
     @Around("execution(* com.masterannonce.application.service.*.*(..))")
+    @SuppressWarnings("java:S2139") // Intentionnel : l'aspect AOP doit logger ET renvoyer l'exception
     public Object logServiceMethods(ProceedingJoinPoint joinPoint) throws Throwable {
         String className = joinPoint.getTarget().getClass().getSimpleName();
         String methodName = joinPoint.getSignature().getName();
@@ -41,7 +42,7 @@ public class LoggingAspect {
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
             log.error("✖ {}.{} [{}ms] → {} : {}", className, methodName, duration,
-                e.getClass().getSimpleName(), e.getMessage());
+                e.getClass().getSimpleName(), e.getMessage(), e);
             throw e;
         }
     }

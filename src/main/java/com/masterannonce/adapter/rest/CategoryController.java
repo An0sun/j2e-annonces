@@ -6,6 +6,7 @@ import com.masterannonce.application.mapper.CategoryMapper;
 import com.masterannonce.application.service.CategoryService;
 import com.masterannonce.domain.model.Category;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class CategoryController {
 
     @GetMapping
     @Operation(summary = "Lister les catégories")
+    @ApiResponse(responseCode = "200", description = "Liste des catégories retournée")
     public ResponseEntity<List<CategoryDTO>> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categoryMapper.toDTOList(categories));
@@ -40,6 +42,8 @@ public class CategoryController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Détail d'une catégorie")
+    @ApiResponse(responseCode = "200", description = "Catégorie trouvée")
+    @ApiResponse(responseCode = "404", description = "Catégorie non trouvée")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
         Category category = categoryService.getCategoryById(id);
         return ResponseEntity.ok(categoryMapper.toDTO(category));
@@ -48,6 +52,9 @@ public class CategoryController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Créer une catégorie", description = "Réservé aux administrateurs")
+    @ApiResponse(responseCode = "201", description = "Catégorie créée")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "403", description = "Rôle ADMIN requis")
     public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody CategoryCreateDTO dto) {
         Category category = categoryMapper.toEntity(dto);
         Category saved = categoryService.createCategory(category);

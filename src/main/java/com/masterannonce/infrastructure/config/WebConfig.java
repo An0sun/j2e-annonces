@@ -5,7 +5,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * CORS configuration — allows frontend apps to consume the API.
+ * Configuration CORS — permet aux applications frontend de consommer l'API.
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {

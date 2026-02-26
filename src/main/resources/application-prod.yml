@@ -1,4 +1,4 @@
-# ===== Production Profile =====
+# ===== Profil Production =====
 spring:
   jpa:
     hibernate:
@@ -6,9 +6,14 @@ spring:
     show-sql: false
   flyway:
     enabled: true
+  sql:
+    init:
+      mode: never
 
 logging:
   level:
     com.masterannonce: INFO
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%X{correlationId:-N/A}] %-5level %logger{36} - %msg%n"

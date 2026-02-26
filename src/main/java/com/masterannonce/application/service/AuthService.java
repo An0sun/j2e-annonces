@@ -70,7 +70,6 @@ public class AuthService {
         }
 
         String username = jwtService.getUsernameFromToken(refreshTokenValue);
-        Long userId = jwtService.getUserIdFromToken(refreshTokenValue);
 
         User user = userService.getUserByUsername(username);
 

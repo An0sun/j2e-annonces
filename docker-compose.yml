@@ -1,5 +1,5 @@
 services:
-  # ===== PostgreSQL =====
+  # ===== PostgreSQL (Application) =====
   postgres:
     image: postgres:16-alpine
     container_name: masterannonce-postgres
@@ -30,8 +30,48 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/MasterAnnonce
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_SECRET: dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZw==
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZ0ZvckhTNTEyQWxnb3JpdGhtQ29tcGxpYW5jZSEh
+
+  # ===== PostgreSQL (SonarQube) =====
+  sonarqube-db:
+    image: postgres:16-alpine
+    container_name: masterannonce-sonarqube-db
+    environment:
+      POSTGRES_DB: sonarqube
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - sonarqube_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== SonarQube =====
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: masterannonce-sonarqube
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      # Désactiver le check Elasticsearch pour environnement dev
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
 
 volumes:
   postgres_data:
+  sonarqube_db_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:

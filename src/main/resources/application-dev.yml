@@ -1,0 +1,23 @@
+# ===== Profil Développement =====
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    com.masterannonce: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%X{correlationId:-N/A}] %-5level %logger{36} - %msg%n"

@@ -6,7 +6,7 @@ package com.masterannonce.domain.exception;
 public class ResourceNotFoundException extends RuntimeException {
 
     private final String resourceName;
-    private final Object resourceId;
+    private final transient Object resourceId;
 
     public ResourceNotFoundException(String resourceName, Object resourceId) {
         super(resourceName + " introuvable (id=" + resourceId + ")");

@@ -14,7 +14,7 @@ spring:
 
 app:
   jwt:
-    secret: dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZw==
+    secret: dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZ0ZvckhTNTEyQWxnb3JpdGhtQ29tcGxpYW5jZSEh
     expiration-ms: 3600000
     refresh-expiration-ms: 86400000
 

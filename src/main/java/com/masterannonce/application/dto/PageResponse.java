@@ -3,10 +3,10 @@ package com.masterannonce.application.dto;
 import java.util.List;
 
 /**
- * Generic paginated response DTO.
- * Wraps Spring's Page into a clean, framework-agnostic contract.
+ * DTO générique de réponse paginée.
+ * Encapsule le Page de Spring dans un contrat propre.
  *
- * @param <T> the type of content items
+ * @param <T> le type des éléments de contenu
  */
 public record PageResponse<T>(
     List<T> content,
@@ -19,7 +19,7 @@ public record PageResponse<T>(
 ) {
 
     /**
-     * Factory method to create a PageResponse from a Spring Page.
+     * Méthode factory pour créer un PageResponse depuis un Page Spring.
      */
     public static <T> PageResponse<T> from(org.springframework.data.domain.Page<T> springPage) {
         return new PageResponse<>(

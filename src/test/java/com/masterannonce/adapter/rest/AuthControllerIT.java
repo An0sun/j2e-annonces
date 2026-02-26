@@ -50,7 +50,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login — Login réussi retourne un JWT")
+    @DisplayName("POST /api/v1/auth/login — Login réussi retourne un JWT")
     void loginSuccess() throws Exception {
         LoginRequest request = new LoginRequest("testuser", "Password1");
 
@@ -69,7 +69,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login — Identifiants invalides retourne 400")
+    @DisplayName("POST /api/v1/auth/login — Identifiants invalides retourne 400")
     void loginBadCredentials() throws Exception {
         LoginRequest request = new LoginRequest("testuser", "wrongpassword");
 
@@ -80,7 +80,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/register — Inscription réussie")
+    @DisplayName("POST /api/v1/auth/register — Inscription réussie")
     void registerSuccess() throws Exception {
         RegisterRequest request = new RegisterRequest("newuser", "newuser@test.com", "Password1A");
 
@@ -93,7 +93,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/register — Duplicate username retourne 400")
+    @DisplayName("POST /api/v1/auth/register — Duplicate username retourne 400")
     void registerDuplicateUsername() throws Exception {
         RegisterRequest request = new RegisterRequest("testuser", "other@test.com", "Password1");
 
@@ -104,7 +104,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/refresh — Rafraîchir le token")
+    @DisplayName("POST /api/v1/auth/refresh — Rafraîchir le token")
     void refreshToken() throws Exception {
         // D'abord, obtenir un refresh token via login
         LoginRequest loginReq = new LoginRequest("testuser", "Password1");

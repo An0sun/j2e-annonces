@@ -16,7 +16,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface AnnonceMapper {
 
-    // ===== Entity → DTO =====
+    // ===== Entité → DTO =====
 
     @Mapping(source = "author.id", target = "authorId")
     @Mapping(source = "author.username", target = "authorUsername")
@@ -27,7 +27,7 @@ public interface AnnonceMapper {
 
     List<AnnonceDTO> toDTOList(List<Annonce> entities);
 
-    // ===== DTO → Entity (création) =====
+    // ===== DTO → Entité (création) =====
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -37,7 +37,7 @@ public interface AnnonceMapper {
     @Mapping(target = "version", ignore = true)
     Annonce toEntity(AnnonceCreateDTO dto);
 
-    // ===== DTO → Entity (mise à jour complète) =====
+    // ===== DTO → Entité (mise à jour complète) =====
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -57,7 +57,7 @@ public interface AnnonceMapper {
     @Mapping(target = "version", ignore = true)
     void patchEntity(AnnoncePatchDTO dto, @MappingTarget Annonce entity);
 
-    // ===== Conversion AnnonceStatus enum → String =====
+    // ===== Conversion enum AnnonceStatus → String =====
 
     default String statusToString(com.masterannonce.domain.model.AnnonceStatus status) {
         return status != null ? status.name() : null;

@@ -1,7 +1,6 @@
 package com.masterannonce.infrastructure.security;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -15,11 +14,11 @@ import javax.crypto.SecretKey;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Unit tests for JwtService — token generation, validation, and extraction.
+ * Tests unitaires pour JwtService — génération, validation et extraction de tokens.
  */
 class JwtServiceTest {
 
-    private static final String SECRET = "dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZw==";
+    private static final String SECRET = "dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZ0ZvckhTNTEyQWxnb3JpdGhtQ29tcGxpYW5jZSEh";
     private JwtService jwtService;
 
     @BeforeEach
@@ -32,7 +31,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("generateToken — contains expected claims (userId, username, role)")
+    @DisplayName("generateToken — contient les claims attendus (userId, username, role)")
     void generateToken_containsExpectedClaims() {
         String token = jwtService.generateToken(42L, "testuser", "ROLE_USER");
 
@@ -43,7 +42,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("generateRefreshToken — contains type=refresh claim")
+    @DisplayName("generateRefreshToken — contient le claim type=refresh")
     void generateRefreshToken_containsTypeClaim() {
         String token = jwtService.generateRefreshToken(42L, "testuser");
 
@@ -54,7 +53,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("isRefreshToken — true for refresh, false for access")
+    @DisplayName("isRefreshToken — vrai pour refresh, faux pour access")
     void isRefreshToken_distinguishesTokenTypes() {
         String access = jwtService.generateToken(1L, "user", "ROLE_USER");
         String refresh = jwtService.generateRefreshToken(1L, "user");
@@ -64,9 +63,9 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("validateToken — throws ExpiredJwtException for expired token")
+    @DisplayName("validateToken — lève ExpiredJwtException pour un token expiré")
     void validateToken_throwsOnExpired() {
-        // Create a service with very short expiration
+        // Créer un service avec une expiration très courte
         JwtProperties shortProps = new JwtProperties();
         shortProps.setSecret(SECRET);
         shortProps.setExpirationMs(-1000); // already expired
@@ -76,13 +75,14 @@ class JwtServiceTest {
         String token = shortService.generateToken(1L, "user", "ROLE_USER");
 
         assertThatThrownBy(() -> shortService.validateToken(token))
-            .isInstanceOf(ExpiredJwtException.class);
+            .isInstanceOf(JwtException.class)
+            .hasMessageContaining("expiré");
     }
 
     @Test
-    @DisplayName("validateToken — throws JwtException for invalid signature")
+    @DisplayName("validateToken — lève JwtException pour une signature invalide")
     void validateToken_throwsOnInvalidSignature() {
-        // Generate token with a different key
+        // Générer un token avec une clé différente
         SecretKey otherKey = Keys.hmacShaKeyFor(
             Decoders.BASE64.decode("b3RoZXJTZWNyZXRLZXlUaGF0SXNBbHNvTG9uZ0Vub3VnaEZvckpXVFNpZ25pbmdUaGF0SXNBdExlYXN0NTEyQml0cw=="));
         String fakeToken = Jwts.builder()
@@ -95,7 +95,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("getUsernameFromToken / getUserIdFromToken / getRoleFromToken — extract correctly")
+    @DisplayName("getUsernameFromToken / getUserIdFromToken / getRoleFromToken — extraction correcte")
     void extractionMethods() {
         String token = jwtService.generateToken(99L, "admin", "ROLE_ADMIN");
 

@@ -42,7 +42,7 @@ server:
 # ===== JWT =====
 app:
   jwt:
-    secret: ${JWT_SECRET:dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZw==}
+    secret: ${JWT_SECRET:dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1RoYXRJc0F0TGVhc3Q1MTJCaXRzTG9uZ0ZvckhTNTEyQWxnb3JpdGhtQ29tcGxpYW5jZSEh}
     expiration-ms: ${JWT_EXPIRATION:3600000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION:86400000}
 

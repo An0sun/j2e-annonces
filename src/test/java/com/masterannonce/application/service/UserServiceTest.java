@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for UserService with Mockito.
+ * Tests unitaires pour UserService avec Mockito.
  */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -41,7 +41,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("register — success: password is hashed, user is saved")
+    @DisplayName("register — succès : le mot de passe est hashé, l'utilisateur est sauvegardé")
     void register_success() {
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
@@ -56,7 +56,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("register — duplicate username throws BusinessException")
+    @DisplayName("register — username en doublon lève BusinessException")
     void register_duplicateUsername() {
         when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
@@ -68,7 +68,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("register — duplicate email throws BusinessException")
+    @DisplayName("register — email en doublon lève BusinessException")
     void register_duplicateEmail() {
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByEmail("test@test.com")).thenReturn(true);
@@ -81,7 +81,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("register — default role is ROLE_USER")
+    @DisplayName("register — le rôle par défaut est ROLE_USER")
     void register_defaultRole() {
         User newUser = new User("newuser", "new@test.com", "pass");
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
@@ -95,7 +95,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("getUserByUsername — success")
+    @DisplayName("getUserByUsername — succès")
     void getUserByUsername_success() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(sampleUser));
 
@@ -105,7 +105,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("getUserByUsername — not found throws ResourceNotFoundException")
+    @DisplayName("getUserByUsername — introuvable lève ResourceNotFoundException")
     void getUserByUsername_notFound() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
@@ -114,7 +114,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("getUserById — not found throws ResourceNotFoundException")
+    @DisplayName("getUserById — introuvable lève ResourceNotFoundException")
     void getUserById_notFound() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 

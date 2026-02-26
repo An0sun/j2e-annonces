@@ -16,7 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Unit tests for GlobalExceptionHandler — verifies HTTP status and response body for each exception type.
+ * Tests unitaires pour GlobalExceptionHandler — vérifie le code HTTP et le corps de réponse pour chaque type d'exception.
  */
 class GlobalExceptionHandlerTest {
 
@@ -57,7 +57,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("MethodArgumentNotValidException → 400 with field errors")
+    @DisplayName("MethodArgumentNotValidException → 400 avec erreurs de champs")
     void handleValidation() throws Exception {
         BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "dto");
         bindingResult.addError(new FieldError("dto", "title", "ne peut pas être vide"));
@@ -96,7 +96,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Generic Exception → 500")
+    @DisplayName("Exception générique → 500")
     void handleGeneral() {
         Exception ex = new RuntimeException("unexpected");
 

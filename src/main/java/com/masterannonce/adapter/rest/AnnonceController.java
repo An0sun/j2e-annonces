@@ -7,6 +7,7 @@ import com.masterannonce.domain.model.Annonce;
 import com.masterannonce.domain.model.AnnonceStatus;
 import com.masterannonce.infrastructure.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,8 @@ import java.sql.Timestamp;
 @Tag(name = "Annonces", description = "CRUD et gestion du cycle de vie des annonces")
 public class AnnonceController {
 
+    private static final String ANNONCES_BASE_URI = "/api/v1/annonces/";
+
     private final AnnonceService annonceService;
     private final AnnonceMapper annonceMapper;
 
@@ -42,14 +45,14 @@ public class AnnonceController {
 
     private HateoasResponse<AnnonceDTO> toHateoas(AnnonceDTO dto) {
         HateoasResponse.Builder<AnnonceDTO> builder = HateoasResponse.of(dto)
-            .link("self", "/api/v1/annonces/" + dto.id())
+            .link("self", ANNONCES_BASE_URI + dto.id())
             .link("collection", "/api/v1/annonces");
 
         if ("DRAFT".equals(dto.status())) {
-            builder.link("publish", "/api/v1/annonces/" + dto.id() + "/publish");
+            builder.link("publish", ANNONCES_BASE_URI + dto.id() + "/publish");
         }
         if ("PUBLISHED".equals(dto.status())) {
-            builder.link("archive", "/api/v1/annonces/" + dto.id() + "/archive");
+            builder.link("archive", ANNONCES_BASE_URI + dto.id() + "/archive");
         }
         return builder.build();
     }
@@ -58,6 +61,7 @@ public class AnnonceController {
 
     @GetMapping
     @Operation(summary = "Lister les annonces", description = "Recherche paginée avec filtres via Specifications")
+    @ApiResponse(responseCode = "200", description = "Liste paginée retournée avec succès")
     public ResponseEntity<PageResponse<AnnonceDTO>> listAnnonces(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) AnnonceStatus status,
@@ -74,6 +78,8 @@ public class AnnonceController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Détail d'une annonce")
+    @ApiResponse(responseCode = "200", description = "Annonce trouvée")
+    @ApiResponse(responseCode = "404", description = "Annonce non trouvée")
     public ResponseEntity<HateoasResponse<AnnonceDTO>> getAnnonce(@PathVariable Long id) {
         Annonce annonce = annonceService.getAnnonceById(id);
         return ResponseEntity.ok(toHateoas(annonceMapper.toDTO(annonce)));
@@ -83,6 +89,9 @@ public class AnnonceController {
 
     @PostMapping
     @Operation(summary = "Créer une annonce", description = "L'annonce est créée en statut DRAFT")
+    @ApiResponse(responseCode = "201", description = "Annonce créée avec succès")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "401", description = "Non authentifié")
     public ResponseEntity<HateoasResponse<AnnonceDTO>> createAnnonce(
             @Valid @RequestBody AnnonceCreateDTO dto,
             @AuthenticationPrincipal AuthenticatedUser user) {
@@ -91,11 +100,15 @@ public class AnnonceController {
         Annonce saved = annonceService.createAnnonce(entity, user.userId(), dto.categoryId());
         HateoasResponse<AnnonceDTO> response = toHateoas(annonceMapper.toDTO(saved));
 
-        return ResponseEntity.created(URI.create("/api/v1/annonces/" + saved.getId())).body(response);
+        return ResponseEntity.created(URI.create(ANNONCES_BASE_URI + saved.getId())).body(response);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Modifier une annonce", description = "Seul l'auteur peut modifier. Interdit si PUBLISHED.")
+    @ApiResponse(responseCode = "200", description = "Annonce modifiée")
+    @ApiResponse(responseCode = "400", description = "Annonce publiée non modifiable")
+    @ApiResponse(responseCode = "403", description = "Non autorisé (pas l'auteur)")
+    @ApiResponse(responseCode = "404", description = "Annonce non trouvée")
     public ResponseEntity<HateoasResponse<AnnonceDTO>> updateAnnonce(
             @PathVariable Long id,
             @Valid @RequestBody AnnonceUpdateDTO dto,
@@ -110,6 +123,9 @@ public class AnnonceController {
     @PatchMapping("/{id}")
     @Operation(summary = "Modifier partiellement une annonce (PATCH)",
                description = "Seuls les champs fournis sont mis à jour")
+    @ApiResponse(responseCode = "200", description = "Annonce modifiée partiellement")
+    @ApiResponse(responseCode = "403", description = "Non autorisé")
+    @ApiResponse(responseCode = "404", description = "Annonce non trouvée")
     public ResponseEntity<HateoasResponse<AnnonceDTO>> patchAnnonce(
             @PathVariable Long id,
             @Valid @RequestBody AnnoncePatchDTO dto,
@@ -121,6 +137,10 @@ public class AnnonceController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Supprimer une annonce", description = "L'annonce doit être archivée avant suppression")
+    @ApiResponse(responseCode = "204", description = "Annonce supprimée")
+    @ApiResponse(responseCode = "400", description = "Annonce non archivée")
+    @ApiResponse(responseCode = "403", description = "Non autorisé")
+    @ApiResponse(responseCode = "404", description = "Annonce non trouvée")
     public ResponseEntity<Void> deleteAnnonce(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthenticatedUser user) {
@@ -133,6 +153,9 @@ public class AnnonceController {
 
     @PatchMapping("/{id}/publish")
     @Operation(summary = "Publier une annonce", description = "Transition DRAFT → PUBLISHED")
+    @ApiResponse(responseCode = "200", description = "Annonce publiée")
+    @ApiResponse(responseCode = "400", description = "Annonce non en brouillon")
+    @ApiResponse(responseCode = "403", description = "Non autorisé")
     public ResponseEntity<HateoasResponse<AnnonceDTO>> publishAnnonce(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthenticatedUser user) {
@@ -144,6 +167,9 @@ public class AnnonceController {
     @PatchMapping("/{id}/archive")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Archiver une annonce", description = "Seul un ADMIN peut archiver")
+    @ApiResponse(responseCode = "200", description = "Annonce archivée")
+    @ApiResponse(responseCode = "403", description = "Rôle ADMIN requis")
+    @ApiResponse(responseCode = "404", description = "Annonce non trouvée")
     public ResponseEntity<HateoasResponse<AnnonceDTO>> archiveAnnonce(@PathVariable Long id) {
 
         Annonce archived = annonceService.archiveAnnonce(id);

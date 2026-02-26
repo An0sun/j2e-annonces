@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Controller de méta-données : expose dynamiquement (via réflexion/introspection)
@@ -40,7 +39,7 @@ public class MetaController {
                 info.put("sortable", String.valueOf(isSortable(f)));
                 return info;
             })
-            .collect(Collectors.toList());
+            .toList();
 
         // Champs autorisés pour le tri (validation des paramètres `sort`)
         List<String> sortableFields = fieldInfos.stream()

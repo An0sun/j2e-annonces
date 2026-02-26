@@ -3,8 +3,6 @@ package com.masterannonce.infrastructure.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -16,7 +14,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
+    private static final String CLAIM_USER_ID = "userId";
 
     private final JwtProperties jwtProperties;
     private final SecretKey signingKey;
@@ -36,7 +34,7 @@ public class JwtService {
 
         return Jwts.builder()
             .subject(username)
-            .claim("userId", userId)
+            .claim(CLAIM_USER_ID, userId)
             .claim("role", role)
             .issuedAt(now)
             .expiration(expiry)
@@ -53,7 +51,7 @@ public class JwtService {
 
         return Jwts.builder()
             .subject(username)
-            .claim("userId", userId)
+            .claim(CLAIM_USER_ID, userId)
             .claim("type", "refresh")
             .issuedAt(now)
             .expiration(expiry)
@@ -72,11 +70,9 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
         } catch (ExpiredJwtException e) {
-            log.warn("Token expiré: {}", e.getMessage());
-            throw e;
+            throw new JwtException("Token JWT expiré", e);
         } catch (JwtException e) {
-            log.warn("Token invalide: {}", e.getMessage());
-            throw e;
+            throw new JwtException("Token JWT invalide", e);
         }
     }
 
@@ -91,7 +87,7 @@ public class JwtService {
      * Extrait le userId depuis le token.
      */
     public Long getUserIdFromToken(String token) {
-        return validateToken(token).get("userId", Long.class);
+        return validateToken(token).get(CLAIM_USER_ID, Long.class);
     }
 
     /**

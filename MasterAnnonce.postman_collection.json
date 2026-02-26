@@ -1,0 +1,430 @@
+{
+	"info": {
+		"_postman_id": "masterannonce-api-collection",
+		"name": "MasterAnnonce API",
+		"description": "Collection complète de l'API MasterAnnonce — Spring Boot 3.5.5\n\n**Utilisateurs de test** :\n- admin / Password1 (ROLE_ADMIN)\n- user1 / Password1 (ROLE_USER)\n- sophie / Password1 (ROLE_USER)\n- karim / Password1 (ROLE_USER)\n- claire / Password1 (ROLE_USER)\n\n**Workflow** : Exécuter \"Login (admin)\" en premier → le token JWT est automatiquement sauvegardé.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Authentification",
+			"item": [
+				{
+					"name": "Login (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('token', json.token);",
+									"    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+									"    pm.test('Token JWT récupéré', function() {",
+									"        pm.expect(json.token).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"Password1\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login (user1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('token', json.token);",
+									"    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"user1\",\n    \"password\": \"Password1\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Register (nouveau compte)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"newuser\",\n    \"email\": \"newuser@email.com\",\n    \"password\": \"Password1\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('token', json.token);",
+									"    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "refresh"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Annonces",
+			"item": [
+				{
+					"name": "Lister les annonces (paginé)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces?page=0&size=10&sort=createdAt,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" },
+								{ "key": "sort", "value": "createdAt,desc" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Lister — filtre par statut",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces?status=PUBLISHED&page=0&size=5",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces"],
+							"query": [
+								{ "key": "status", "value": "PUBLISHED" },
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "5" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Lister — filtre par catégorie",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces?categoryId=1&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces"],
+							"query": [
+								{ "key": "categoryId", "value": "1" },
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Lister — recherche textuelle",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces?q=Lyon&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces"],
+							"query": [
+								{ "key": "q", "value": "Lyon" },
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Détail d'une annonce (HATEOAS)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces", "1"]
+						}
+					}
+				},
+				{
+					"name": "Créer une annonce",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Annonce de test Postman\",\n    \"description\": \"Description de test via Postman\",\n    \"address\": \"1 rue de la Paix, Paris\",\n    \"mail\": \"test@email.com\",\n    \"categoryId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces"]
+						}
+					}
+				},
+				{
+					"name": "Modifier une annonce (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Annonce modifiée\",\n    \"description\": \"Description mise à jour\",\n    \"address\": \"2 rue de la Paix, Paris\",\n    \"mail\": \"updated@email.com\",\n    \"categoryId\": 2,\n    \"version\": 0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces", "1"]
+						}
+					}
+				},
+				{
+					"name": "Modifier partiellement (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Titre partiel mis à jour\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces", "1"]
+						}
+					}
+				},
+				{
+					"name": "Publier une annonce (DRAFT → PUBLISHED)",
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces/4/publish",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces", "4", "publish"]
+						}
+					}
+				},
+				{
+					"name": "Archiver une annonce (ADMIN)",
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces/1/archive",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces", "1", "archive"]
+						}
+					}
+				},
+				{
+					"name": "Supprimer une annonce (ARCHIVED)",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/annonces/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "annonces", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Catégories",
+			"item": [
+				{
+					"name": "Lister les catégories",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "categories"]
+						}
+					}
+				},
+				{
+					"name": "Détail d'une catégorie",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/categories/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "categories", "1"]
+						}
+					}
+				},
+				{
+					"name": "Créer une catégorie (ADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"label\": \"Animaux\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "categories"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Métadonnées",
+			"item": [
+				{
+					"name": "Introspection champs Annonce",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/meta/annonces",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "meta", "annonces"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Actuator",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/actuator/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["actuator", "health"]
+						}
+					}
+				},
+				{
+					"name": "Prometheus Metrics",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/actuator/prometheus",
+							"host": ["{{baseUrl}}"],
+							"path": ["actuator", "prometheus"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -10,8 +10,6 @@ import com.masterannonce.domain.model.AnnonceStatus;
 import com.masterannonce.domain.model.Category;
 import com.masterannonce.domain.model.User;
 import com.masterannonce.infrastructure.persistence.AnnonceRepository;
-import com.masterannonce.infrastructure.persistence.CategoryRepository;
-import com.masterannonce.infrastructure.persistence.UserRepository;
 import com.masterannonce.infrastructure.persistence.specifications.AnnonceSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,17 +29,17 @@ import java.sql.Timestamp;
 public class AnnonceService {
 
     private final AnnonceRepository annonceRepository;
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
+    private final UserService userService;
+    private final CategoryService categoryService;
     private final AnnonceMapper annonceMapper;
 
     public AnnonceService(AnnonceRepository annonceRepository,
-                          UserRepository userRepository,
-                          CategoryRepository categoryRepository,
+                          UserService userService,
+                          CategoryService categoryService,
                           AnnonceMapper annonceMapper) {
         this.annonceRepository = annonceRepository;
-        this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
+        this.userService = userService;
+        this.categoryService = categoryService;
         this.annonceMapper = annonceMapper;
     }
 
@@ -51,15 +49,13 @@ public class AnnonceService {
      * Créer une nouvelle annonce (statut automatiquement DRAFT).
      */
     public Annonce createAnnonce(Annonce annonce, Long authorId, Long categoryId) {
-        User author = userRepository.findById(authorId)
-            .orElseThrow(() -> new ResourceNotFoundException("User", authorId));
+        User author = userService.getUserById(authorId);
 
         annonce.setAuthor(author);
         annonce.setStatus(AnnonceStatus.DRAFT);
 
         if (categoryId != null) {
-            Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", categoryId));
+            Category category = categoryService.getCategoryById(categoryId);
             annonce.setCategory(category);
         }
 
@@ -84,8 +80,7 @@ public class AnnonceService {
         existing.setVersion(updates.getVersion());
 
         if (categoryId != null) {
-            Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", categoryId));
+            Category category = categoryService.getCategoryById(categoryId);
             existing.setCategory(category);
         }
 
@@ -106,8 +101,7 @@ public class AnnonceService {
         annonceMapper.patchEntity(patch, existing);
 
         if (patch.getCategoryId() != null) {
-            Category category = categoryRepository.findById(patch.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", patch.getCategoryId()));
+            Category category = categoryService.getCategoryById(patch.getCategoryId());
             existing.setCategory(category);
         }
 
@@ -170,7 +164,7 @@ public class AnnonceService {
                                          Long categoryId, Long authorId,
                                          Timestamp fromDate, Timestamp toDate,
                                          Pageable pageable) {
-        Specification<Annonce> spec = Specification.where(null);
+        Specification<Annonce> spec = (root, query, cb) -> cb.conjunction();
 
         if (keyword != null && !keyword.isBlank()) {
             spec = spec.and(AnnonceSpecifications.titleOrDescriptionContains(keyword));

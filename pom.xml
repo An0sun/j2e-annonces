@@ -159,6 +159,7 @@
                     </annotationProcessorPaths>
                     <compilerArgs>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
+                        <arg>-parameters</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
@@ -194,6 +195,12 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <formats>
+                                <format>HTML</format>
+                                <format>XML</format>
+                            </formats>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
@@ -228,6 +235,13 @@
                     <consoleOutput>true</consoleOutput>
                     <failOnViolation>false</failOnViolation>
                 </configuration>
+            </plugin>
+
+            <!-- SonarQube Scanner -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>4.0.0.4121</version>
             </plugin>
         </plugins>
     </build>

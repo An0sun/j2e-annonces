@@ -18,7 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for CategoryService with Mockito.
+ * Tests unitaires pour CategoryService avec Mockito.
  */
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
@@ -27,7 +27,7 @@ class CategoryServiceTest {
     @InjectMocks private CategoryService categoryService;
 
     @Test
-    @DisplayName("getAllCategories — returns all categories")
+    @DisplayName("getAllCategories — retourne toutes les catégories")
     void getAllCategories() {
         List<Category> categories = List.of(new Category("Immobilier"), new Category("Auto"));
         when(categoryRepository.findAll()).thenReturn(categories);
@@ -39,7 +39,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("getCategoryById — success")
+    @DisplayName("getCategoryById — succès")
     void getCategoryById_success() {
         Category cat = new Category("Emploi");
         cat.setId(1L);
@@ -51,7 +51,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("getCategoryById — not found throws ResourceNotFoundException")
+    @DisplayName("getCategoryById — introuvable lève ResourceNotFoundException")
     void getCategoryById_notFound() {
         when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -60,7 +60,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("createCategory — delegates to repository.save()")
+    @DisplayName("createCategory — délègue à repository.save()")
     void createCategory() {
         Category cat = new Category("Services");
         when(categoryRepository.save(any(Category.class))).thenReturn(cat);

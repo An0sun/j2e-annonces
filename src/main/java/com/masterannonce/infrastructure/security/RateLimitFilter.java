@@ -17,17 +17,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Rate limiter for authentication endpoints.
- * Limits login attempts to MAX_ATTEMPTS per IP within the time window.
- * Uses a simple in-memory sliding window approach.
- * Disabled during tests via @Profile("!test").
+ * Limiteur de débit pour les endpoints d'authentification.
+ * Limite les tentatives de connexion à MAX_ATTEMPTS par IP dans la fenêtre de temps.
+ * Utilise une approche simple de fenêtre glissante en mémoire.
+ * S'applique uniquement à POST /api/v1/auth/login.
+ * Désactivé pendant les tests via @Profile("!test").
  */
 @Component
 @Profile("!test")
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final int MAX_ATTEMPTS = 5;
-    private static final long WINDOW_MS = 60_000; // 1 minute
+    private static final long WINDOW_MS = 60_000; // 1 minute (fenêtre de temps)
 
     private final Map<String, RateWindow> attempts = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
@@ -44,7 +45,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String ip = getClientIp(request);
         RateWindow window = attempts.computeIfAbsent(ip, k -> new RateWindow());
 
-        // Reset window if expired
+        // Réinitialiser la fenêtre si expirée
         long now = System.currentTimeMillis();
         if (now - window.windowStart > WINDOW_MS) {
             window.reset(now);
@@ -64,7 +65,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Only rate-limit POST /api/auth/login
+        // Limiter uniquement POST /api/v1/auth/login
         return !(request.getRequestURI().equals("/api/v1/auth/login")
                 && "POST".equalsIgnoreCase(request.getMethod()));
     }

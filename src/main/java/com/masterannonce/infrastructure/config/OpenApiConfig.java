@@ -20,7 +20,7 @@ public class OpenApiConfig {
         return new OpenAPI()
             .info(new Info()
                 .title("MasterAnnonce API")
-                .version("1.0.0")
+                .version("1.1.0")
                 .description("API REST de gestion d'annonces — Spring Boot 3.5.5")
                 .contact(new Contact()
                     .name("MasterAnnonce Team")

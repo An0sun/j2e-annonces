@@ -83,7 +83,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     // ===== GET (public) =====
 
     @Test
-    @DisplayName("GET /api/annonces — Liste publique paginée")
+    @DisplayName("GET /api/v1/annonces — Liste publique paginée")
     void listAnnoncesPublic() throws Exception {
         mockMvc.perform(get("/api/v1/annonces"))
             .andExpect(status().isOk())
@@ -93,7 +93,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     // ===== POST (authentifié) =====
 
     @Test
-    @DisplayName("POST /api/annonces — Création réussie retourne 201")
+    @DisplayName("POST /api/v1/annonces — Création réussie retourne 201")
     void createAnnonce() throws Exception {
         AnnonceCreateDTO dto = new AnnonceCreateDTO(
             "Appartement 3 pièces", "Bel appartement lumineux", "Paris 11e", "contact@test.com", categoryId);
@@ -110,7 +110,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/annonces — Sans token retourne 401")
+    @DisplayName("POST /api/v1/annonces — Sans token retourne 401")
     void createAnnonceWithoutToken() throws Exception {
         AnnonceCreateDTO dto = new AnnonceCreateDTO("Titre", "Desc", "Paris", "t@t.com", null);
 
@@ -125,7 +125,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("CRUD complet : Create → Read → Update → Publish → Archive → Delete")
     void fullCrudLifecycle() throws Exception {
-        // CREATE
+        // CRÉATION
         AnnonceCreateDTO createDto = new AnnonceCreateDTO(
             "Voiture occasion", "Renault Clio 2020", "Lyon", "vente@test.com", categoryId);
 
@@ -139,12 +139,12 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
         Long annonceId = objectMapper.readTree(
             createResult.getResponse().getContentAsString()).get("content").get("id").asLong();
 
-        // READ
+        // LECTURE
         mockMvc.perform(get("/api/v1/annonces/" + annonceId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.title").value("Voiture occasion"));
 
-        // UPDATE (PUT)
+        // MISE À JOUR (PUT)
         String updateBody = """
             {
                 "title": "Voiture occasion MODIFIÉE",
@@ -162,26 +162,26 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.title").value("Voiture occasion MODIFIÉE"));
 
-        // PUBLISH
+        // PUBLICATION
         mockMvc.perform(patch("/api/v1/annonces/" + annonceId + "/publish")
                 .header("Authorization", "Bearer " + userToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.status").value("PUBLISHED"));
 
-        // UPDATE should FAIL (PUBLISHED)
+        // MISE À JOUR doit ÉCHOUER (PUBLISHED)
         mockMvc.perform(put("/api/v1/annonces/" + annonceId)
                 .header("Authorization", "Bearer " + userToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateBody))
             .andExpect(status().isBadRequest());
 
-        // ARCHIVE (ADMIN only)
+        // ARCHIVAGE (ADMIN uniquement)
         mockMvc.perform(patch("/api/v1/annonces/" + annonceId + "/archive")
                 .header("Authorization", "Bearer " + adminToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.status").value("ARCHIVED"));
 
-        // DELETE
+        // SUPPRESSION
         mockMvc.perform(delete("/api/v1/annonces/" + annonceId)
                 .header("Authorization", "Bearer " + userToken))
             .andExpect(status().isNoContent());
@@ -194,7 +194,7 @@ class AnnonceControllerIT extends AbstractIntegrationTest {
     // ===== Sécurité : rôles =====
 
     @Test
-    @DisplayName("PATCH /api/annonces/{id}/archive — USER non-admin reçoit 403")
+    @DisplayName("PATCH /api/v1/annonces/{id}/archive — USER non-admin reçoit 403")
     void archiveByNonAdmin() throws Exception {
         // Créer une annonce
         AnnonceCreateDTO dto = new AnnonceCreateDTO("Titre", "Desc", "Paris", "t@t.com", null);
